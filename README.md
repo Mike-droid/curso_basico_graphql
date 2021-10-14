@@ -356,3 +356,140 @@ db.getCollection('courses').find(
         topic: 'Programming 3',
     }
 )```
+
+URL correcto en Node.js:
+
+```javascript
+const { MongoClient } = require('mongodb');
+
+const {
+    DB_USER,
+    DB_PASSWORD,
+    DB_NAME,
+    DB_HOST,
+} = process.env;
+
+const mongoUrl = `mongodb+srv://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_NAME}?retryWrites=true&w=majority`;
+```
+
+### Mutations e Inputs
+
+Las mutations sirven para insertar información.
+
+Insertamos en schema.graphql:
+
+```grapqhl
+input CourseInput {
+    title: String!
+    teacher: String
+    description: String!
+    topic: String
+}
+
+type Mutation {
+    "Crea un curso"
+    createCourse(input: CourseInput!): Course
+}
+
+```
+
+Creamos 'lib/mutations.js':
+
+```javascript
+const connectDb = require('./db')
+
+module.exports = {
+    createCourse: async (root, { input }) => {
+        const defaults = {
+            teacher: '',
+            topic: '',
+        }
+        const newCourse = Object.assign(defaults, input)
+        let db
+        let course
+        try {
+            db = await connectDb()
+            course = await db.collection('courses').insertOne(newCourse)
+            newCourse._id = course.insertedId
+        } catch (error) {
+            console.error(error)
+        }
+        return newCourse
+    }
+}
+```
+
+Creamos 'lib/queries.js':
+
+```javascript
+const connectDb = require('./db')
+const { ObjectId } = require('mongodb')
+
+module.exports = {
+    getCourses: async () => {
+        let db
+        let courses = []
+        try {
+            db = await connectDb()
+            courses = await db.collection('courses').find().toArray() //*Devuelve todos los cursos
+        } catch (error) {
+            console.console.error(error);
+        }
+        return courses
+    },
+    getCourse: async (root, { id }) => {
+        let db
+        let course
+        try {
+            db = await connectDb()
+            course = await db.collection('courses').findOne({ _id: ObjectId(id) })
+        } catch (error) {
+            console.console.error(error);
+        }
+        return course
+    }
+}
+```
+
+Modificamos resolvers.js:
+
+```javascript
+const queries = require('./queries')
+const mutations = require('./mutations')
+
+module.exports = {
+    Query: queries,
+    Mutation: mutations
+}
+
+```
+
+Y si hacemos por ejemplo:
+
+```grapqhl
+mutation {
+  createCourse(input: {
+    title: "Curso #4"
+    description: "Descripción 4"
+    topic: "Diseño"
+  }) {
+    _id
+    title
+    description
+  }
+}
+```
+
+Obtendremos de regreso la información que creamos:
+
+```json
+{
+  "data": {
+    "createCourse": {
+      "_id": "61679d9674f13179ec79bbc4",
+      "title": "Curso #4",
+      "description": "Descripción 4"
+    }
+  }
+}
+```
