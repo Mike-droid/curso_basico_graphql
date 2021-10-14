@@ -493,3 +493,216 @@ Obtendremos de regreso la información que creamos:
   }
 }
 ```
+
+### Repaso - Creando el tipo Estudiante
+
+Agregamos al schema.graphql:
+
+```graphql
+type Course {
+    _id: ID!
+    title: String!
+    teacher: String
+    description: String!
+    topic: String
+}
+
+type Student {
+    _id: ID!
+    name: String!
+    email: String!
+}
+
+type Query {
+    "Devuelve todos los cursos"
+    getCourses: [Course]
+    "Devuelve un curso"
+    getCourse(id: ID!): Course
+    "Devuelve todos los estudiantes"
+    getStudents: [Student]
+    "Devuelve un estudiante"
+    getStudent(id: ID!): Student
+}
+
+input CourseInput {
+    title: String!
+    teacher: String
+    description: String!
+    topic: String
+}
+
+input CourseEditInput {
+    title: String
+    teacher: String
+    description: String
+    topic: String
+}
+
+input StudentInput {
+    name: String!
+    email: String!
+}
+
+input StudentEditInput {
+    name: String
+    email: String
+}
+
+type Mutation {
+    "Crea un curso"
+    createCourse(input: CourseInput!): Course
+    "Edita un curso"
+    editCourse(_id: ID!, input: CourseEditInput): Course
+    "Elimina un curso"
+    deleteCourse(_id: ID!): String
+    "Crea un estudiante"
+    createStudent(input: StudentInput!): Student
+    "Edita un estudiante"
+    editStudent(_id: ID!, input: StudentEditInput): Student
+    "Elimina un estudiante"
+    deleteStudent(_id: ID!): String
+}
+
+```
+
+Modificamos queries.js:
+
+```javascript
+const connectDb = require('./db')
+const { ObjectId } = require('mongodb')
+
+module.exports = {
+    getCourses: async () => {
+        let db
+        let courses = []
+        try {
+            db = await connectDb()
+            courses = await db.collection('courses').find().toArray() //*Devuelve todos los cursos
+        } catch (error) {
+            console.console.error(error);
+        }
+        return courses
+    },
+    getCourse: async (root, { id }) => {
+        let db
+        let course
+        try {
+            db = await connectDb()
+            course = await db.collection('courses').findOne({ _id: ObjectId(id) })
+        } catch (error) {
+            console.console.error(error);
+        }
+        return course
+    },
+    getStudents: async () => {
+        let db
+        let students = []
+        try {
+            db = await connectDb()
+            students = await db.collection('students').find().toArray() //*Devuelve todos los cursos
+        } catch (error) {
+            console.console.error(error);
+        }
+        return students
+    },
+    getStudent: async (root, { id }) => {
+        let db
+        let student
+        try {
+            db = await connectDb()
+            student = await db.collection('students').findOne({ _id: ObjectId(id) })
+        } catch (error) {
+            console.console.error(error);
+        }
+        return Student
+    }
+}
+```
+
+Modificamos mutations.js:
+
+```javascript
+const connectDb = require('./db')
+const { ObjectId } = require('mongodb')
+
+module.exports = {
+    createCourse: async (root, { input }) => {
+        const defaults = {
+            teacher: '',
+            topic: '',
+        }
+        const newCourse = Object.assign(defaults, input)
+        let db
+        let course
+        try {
+            db = await connectDb()
+            course = await db.collection('courses').insertOne(newCourse)
+            newCourse._id = course.insertedId
+        } catch (error) {
+            console.error(error)
+        }
+        return newCourse
+    },
+    createStudent: async (root, { input }) => {
+        let db
+        let student
+        try {
+            db = await connectDb()
+            student = await db.collection('students').insertOne(input)
+            input._id = student.insertedId
+        } catch (error) {
+            console.error(error)
+        }
+        return input
+    },
+    editCourse: async (root, { _id, input }) => {
+        let db
+        let course
+        try {
+            db = await connectDb()
+            await db.collection('courses').updateOne({ _id: ObjectId(_id) }, { $set: input })
+            course = await db.collection('courses').findOne({ _id: ObjectId(_id) })
+        } catch (error) {
+            console.error(error)
+        }
+        return course
+    },
+    editStudent: async (root, { _id, input }) => {
+        let db
+        let student
+        try {
+            db = await connectDb()
+            await db.collection('students').updateOne({ _id: ObjectId(_id) }, { $set: input })
+            student = await db.collection('students').findOne({ _id: ObjectId(_id) })
+        } catch (error) {
+            console.error(error)
+        }
+        return student
+    },
+    deleteCourse: async (root, { _id }) => {
+        let db
+        let course
+        try {
+            db = await connectDb()
+            course = await db.collection('courses').findOne({ _id: ObjectId(_id) })
+            await db.collection('courses').deleteOne({ _id: ObjectId(_id) })
+        } catch (error) {
+            console.error(error)
+        }
+        return `Curso ${_id} eliminado correctamente`
+    },
+    deleteStudent: async (root, { _id }) => {
+        let db
+        let student
+        try {
+            db = await connectDb()
+            student = await db.collection('students').findOne({ _id: ObjectId(_id) })
+            await db.collection('students').deleteOne({ _id: ObjectId(_id) })
+        } catch (error) {
+            console.error(error)
+        }
+        return `Estudiante ${_id} eliminado correctamente`
+    }
+}
+
+```
