@@ -926,3 +926,49 @@ fragment CourseFields on Course {
   }
 }
 ```
+
+### Variables
+
+Podemos usar variables que harán a nuestras consultas más realistas y escalables:
+
+```graphql
+mutation AddPersonToCourse($course: ID!, $person: ID!){
+  addPeople(courseID: $course, personID: $person){
+    _id
+    title
+  }
+}
+```
+
+Las variables las debemos pasar como un JSON:
+
+```json
+{
+  "course": "61664f8ded307fc554c71901",
+  "person": "6168f16a995ad2d4ee462d88"
+}
+```
+
+Otro ejemplo:
+
+```graphql
+query GetCourse($course: ID!) {
+  getCourse(id: $course) {
+    _id
+    title
+    people {
+      _id
+      name
+    }
+  }
+}
+
+```
+
+Y el valor de la variable:
+
+```json
+{
+  "course": "61664f8ded307fc554c71901"
+}
+```
