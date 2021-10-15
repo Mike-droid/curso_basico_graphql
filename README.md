@@ -378,7 +378,7 @@ Las mutations sirven para insertar información.
 
 Insertamos en schema.graphql:
 
-```grapqhl
+```graphql
 input CourseInput {
     title: String!
     teacher: String
@@ -466,7 +466,7 @@ module.exports = {
 
 Y si hacemos por ejemplo:
 
-```grapqhl
+```graphql
 mutation {
   createCourse(input: {
     title: "Curso #4"
@@ -756,6 +756,108 @@ mutation {
   addPeople(courseID:"61679d9674f13179ec79bbc4", personID:"6167a46f1479b7347a98b23c"){
     _id
     title
+  }
+}
+```
+
+### Resolver de tipos
+
+Creamos el archivo types.js:
+
+```javascript
+const connectDb = require('./db')
+const { ObjectId } = require('mongodb')
+
+module.exports = {
+    Course: {
+        people: async ({ people }) => {
+            let db
+            let peopleData
+            let ids
+            try {
+                db = await connectDb()
+                ids = people ? people.map(id => ObjectId(id)) : []
+                peopleData = ids.length > 0 ? await db.collection('students').find({ _id: { $in: ids } }).toArray() : []
+            } catch (error) {
+                console.error(error)
+            }
+            return peopleData
+        }
+    }
+}
+```
+
+Y modificamos resolvers.js:
+
+```javascript
+const queries = require('./queries')
+const mutations = require('./mutations')
+const types = require('./types')
+
+module.exports = {
+    Query: queries,
+    Mutation: mutations,
+    ...types
+}
+
+```
+
+Ahora podemos hacer consultas más complejas que nos regresen resultados más interesantes, por ejemplo:
+
+```graphql
+query {
+  getCourses{
+    _id
+    title
+    teacher
+    description
+    topic
+    people{
+      _id
+      name
+      email
+    }
+  }
+}
+```
+
+En mi caso me regresó:
+
+```json
+{
+  "data": {
+    "getCourses": [
+      {
+        "_id": "61664f8ded307fc554c71901",
+        "title": "My title 3",
+        "teacher": "My teacher 3",
+        "description": "My description 3",
+        "topic": "Programming",
+        "people": []
+      },
+      {
+        "_id": "61664f8ded307fc554c718ff",
+        "title": "New cool title",
+        "teacher": "My teacher",
+        "description": "My description",
+        "topic": "Programming",
+        "people": []
+      },
+      {
+        "_id": "61679d9674f13179ec79bbc4",
+        "title": "Curso #4",
+        "teacher": "",
+        "description": "Descripción 4",
+        "topic": "Diseño",
+        "people": [
+          {
+            "_id": "6167a46f1479b7347a98b23c",
+            "name": "Miguel Reyes",
+            "email": "miguel.reyes@gmail.com"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
