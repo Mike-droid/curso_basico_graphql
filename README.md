@@ -882,3 +882,47 @@ module.exports = errorHandler;
 Y los usamos en todos los archivos donde usábamos `console.error(error)`
 
 `const errorHandler = require('./errorHandler')`
+
+## Conceptos avanzados
+
+### Alias y fragments
+
+En GraphQL Podemos hacer varias consultas al mismo tiempo, por ejemplo:
+
+```graphql
+query{
+  AllCourses: getCourses{
+    _id
+    title
+  }
+  Course1: getCourse(id:"61664f8ded307fc554c718ff"){
+    _id
+    title
+    description
+  }
+  Course2: getCourse(id:"61664f8ded307fc554c71901"){
+    teacher
+    description
+  }
+}
+```
+
+Con los fragments podemos crear queries que mandamos a llamar y así simplificamos el código de las mismas, por ejemplo:
+
+```graphql
+query {
+  AllCourses: getCourses{
+    ...CourseFields
+  }
+}
+
+fragment CourseFields on Course {
+  _id
+  title
+  description
+  people {
+    _id
+    name
+  }
+}
+```
