@@ -972,3 +972,59 @@ Y el valor de la variable:
   "course": "61664f8ded307fc554c71901"
 }
 ```
+
+### Enums
+
+Podemos crear nuestros propios tipos de datos, por ejemplo:
+
+```graphql
+"Valida los tipos de nivel"
+enum Level {
+    principiante
+    intermedio
+    avanzado
+}
+
+type Course {
+    _id: ID!
+    title: String!
+    teacher: String
+    description: String!
+    topic: String
+    people: [Student]
+    level: Level
+}
+
+input CourseInput {
+    title: String!
+    teacher: String
+    description: String!
+    topic: String
+    level: Level
+}
+```
+
+Y después podemos hacer algo como:
+
+```graphql
+mutation CreateNewCourse($input: CourseInput!) {
+  createCourse(input: $input){
+    _id
+    title
+  }
+}
+```
+
+Y las variables:
+
+```json
+{
+  "input": {
+    "title": "Curso de Marketing",
+    "teacher": "Ximena Ruíz",
+    "description": "Curso para hacer los mejores browniies y venderlos",
+    "topic": "Digital Marketing",
+    "level": "intermedio"
+  }
+}
+```
