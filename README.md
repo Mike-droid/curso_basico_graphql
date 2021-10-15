@@ -706,3 +706,56 @@ module.exports = {
 }
 
 ```
+
+### Nested Types
+
+Modificamos el schema:
+
+```graphql
+type Course {
+    _id: ID!
+    title: String!
+    teacher: String
+    description: String!
+    topic: String
+    people: [Student]
+}
+
+type Mutation {
+    "Agrega una persona a un curso"
+    addPeople(courseID: ID!, personID: ID!): Course
+}
+```
+
+Añadimos la función a mutations.js:
+
+```javascript
+addPeople: async (root, { courseID, personID }) => {
+    let db
+    let person
+    let course
+    try {
+        db = await connectDb()
+        course = await db.collection('courses').findOne({ _id: ObjectId(courseID) })
+        person = await db.collection('students').findOne({ _id: ObjectId(personID) })
+        if (!course || !person) {
+            throw new Error('La persona o el curso no existe')
+        }
+        await db.collection('courses').updateOne({ _id: ObjectId(courseID) }, { $addToSet: {people: personID } })
+    } catch (error) {
+        console.error(error)
+    }
+    return course
+    }
+```
+
+Y ahora podemos insertar IDs de estudiantes a los cursos:
+
+```graphql
+mutation {
+  addPeople(courseID:"61679d9674f13179ec79bbc4", personID:"6167a46f1479b7347a98b23c"){
+    _id
+    title
+  }
+}
+```
