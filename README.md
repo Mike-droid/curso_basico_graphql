@@ -861,3 +861,24 @@ En mi caso me regresó:
   }
 }
 ```
+
+### Errores
+
+Las inconsistencias en los esquemas son errores que debemos de tener cuidado de evitar. Nos impideran manejar la información de manera correcta.
+
+*NO es buena practica* devolverle errores técnicos a los usuarios. Tienen que ser errores amigables 🦄.
+
+Creamos 'lib/errorHandler.js':
+
+```javascript
+function errorHandler (error) {
+    console.log(error)
+    throw new Error('Fallo en la operación del servidor');
+}
+
+module.exports = errorHandler;
+```
+
+Y los usamos en todos los archivos donde usábamos `console.error(error)`
+
+`const errorHandler = require('./errorHandler')`
