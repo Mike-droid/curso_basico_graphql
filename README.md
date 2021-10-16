@@ -1342,3 +1342,39 @@ Y como el keyword que (al menos yo escogí) es 'programming', regresa un resulta
   }
 }
 ```
+
+## Consumiendo el API
+
+### Preparando API para producción
+
+Debemos hacer `npm i cors` para que nuestra API pueda ser consumida desde cualquier lado.
+
+Para hacer que esté listo nuestro entorno en producción hacemos lo siguiente:
+
+En index.js:
+
+```javascript
+const cors = require("cors");
+
+const isDev = process.env.NODE_ENV.trimRight() !== "production"
+//* Hacemos trimRight porque el NODE_ENV viene con un espacio al final, en package.json
+
+app.use(cors());
+
+app.use('/api', graphqlHTTP({
+    schema,
+    rootValue: resolvers,
+    graphiql: isDev
+}));
+
+```
+
+En el package.json:
+
+```json
+{
+    "scripts": {
+        "start": "SET NODE_ENV=production & node index"
+    }
+}
+```
