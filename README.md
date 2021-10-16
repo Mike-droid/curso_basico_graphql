@@ -1233,3 +1233,112 @@ Sin embargo, con la variable en false:
 Nuestro resultado no contiene el campo phone porque el valor es false.
 
 También podemos agregar una directiva al schema, por ejemlplo `@deprecated`. Esta sirve para indicar que este campo ya *NO* estará en uso, incluso el mismo GraphQL te lo dice cuando ustas un campo con esta directiva.
+
+### Unions
+
+Unions permite hacer lo mismo que interfaces pero de una manera más extrema.
+
+Agregamos una union a nuestro schema:
+
+```graphql
+union GlobalSearch = Course | Student | Monitor
+
+type Query {
+    "Devuelve todos los cursos"
+    getCourses: [Course]
+    "Devuelve un curso"
+    getCourse(id: ID!): Course
+    "Devuelve todos los estudiantes"
+    getPeople: [Person]
+    "Devuelve un estudiante"
+    getPerson(id: ID!): Person
+    "Ejecuta una búsqueda global"
+    searchItems(keyword: String!): [GlobalSearch]
+}
+```
+
+Agregamos en types.js:
+
+```javascript
+GlobalSearch: {
+    __resolveType: (item, context, info) => {
+        if (item.title){
+            return 'Course'
+        }
+        if (item.phone) {
+            return 'Monitor'
+        }
+        return 'Student'
+    }
+}
+```
+
+Agregamos en queries.js:
+
+```javascript
+searchItems: async (root, { keyword }) => {
+    let db
+    let items
+    let courses
+    let people
+    try {
+        db = await connectDb()
+        courses = await db.collection('courses').find({ $text: { $search: keyword } }).toArray()
+        people = await db.collection('students').find({ $text: { $search: keyword } }).toArray()
+        items = [...courses, ...people]
+    } catch (error) {
+        errorHandler(error);
+    }
+    return items
+}
+```
+
+Antes de continuar, debemos crear índices en MongoDB:
+
+`db.courses.createIndex({ "$**": "text" })` & `db.students.createIndex({ "$**": "text" })`
+
+Y ahora podemos hacer por ejemplo esta querie:
+
+```graphql
+{
+    searchItems(keyword: "programming") {
+    __typename
+    ... on Course {
+          title
+          description
+          topic
+        }
+    ... on Monitor {
+          name
+          phone
+        }
+    ... on Student {
+          name
+          email
+        }
+    }
+}
+```
+
+Y como el keyword que (al menos yo escogí) es 'programming', regresa un resultado:
+
+```json
+{
+  "data": {
+    "searchItems": [
+      {
+        "__typename": "Course",
+        "title": "New cool title",
+        "description": "My description",
+        "topic": "Programming"
+      },
+      {
+        "__typename": "Course",
+        "title": "My title 3",
+        "description": "My description 3",
+        "topic": "Programming"
+      }
+    ]
+  }
+}
+```
