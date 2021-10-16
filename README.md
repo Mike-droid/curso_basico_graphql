@@ -1378,3 +1378,7 @@ En el package.json:
     }
 }
 ```
+
+### HTTP requests
+
+Desde VS Code podemos hacer estas peticiones con la extensión ThunderClient.
