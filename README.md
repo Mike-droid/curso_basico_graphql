@@ -1028,3 +1028,140 @@ Y las variables:
   }
 }
 ```
+
+### Interfaces - Tipo Monitor
+
+Editamos el schema para los monitores:
+
+```graphql
+"Valida los tipos de nivel"
+enum Level {
+    principiante
+    intermedio
+    avanzado
+}
+
+type Course {
+    _id: ID!
+    title: String!
+    teacher: String
+    description: String!
+    topic: String
+    people: [Student]
+    level: Level
+}
+
+interface Person {
+    _id: ID!
+    name: String!
+    email: String!
+}
+
+type Student implements Person {
+    _id: ID!
+    name: String!
+    email: String!
+    avatar: String
+}
+
+type Monitor implements Person {
+    _id: ID!
+    name: String!
+    email: String!
+    phone: String
+}
+
+type Query {
+    "Devuelve todos los cursos"
+    getCourses: [Course]
+    "Devuelve un curso"
+    getCourse(id: ID!): Course
+    "Devuelve todos los estudiantes"
+    getPeople: [Person]
+    "Devuelve un estudiante"
+    getPerson(id: ID!): Person
+}
+
+input CourseInput {
+    title: String!
+    teacher: String
+    description: String!
+    topic: String
+    level: Level
+}
+
+input CourseEditInput {
+    title: String
+    teacher: String
+    description: String
+    topic: String
+}
+
+input PersonInput {
+    name: String!
+    email: String!
+    phone: String
+    avatar: String
+}
+
+input PersonEditInput {
+    name: String
+    email: String
+    phone: String
+    avatar: String
+}
+
+type Mutation {
+    "Crea un curso"
+    createCourse(input: CourseInput!): Course
+    "Edita un curso"
+    editCourse(_id: ID!, input: CourseEditInput): Course
+    "Elimina un curso"
+    deleteCourse(_id: ID!): String
+    "Crea una persona"
+    createPerson(input: PersonInput!): Person
+    "Edita una persona"
+    editPerson(_id: ID!, input: PersonEditInput): Person
+    "Elimina un estudiante"
+    deleteStudent(_id: ID!): String
+    "Agrega una persona a un curso"
+    addPeople(courseID: ID!, personID: ID!): Course
+}
+
+```
+
+Agregamos Person a los types:
+
+```javascript
+Person : {
+    __resolveType: (person, context, info) => {
+        if (person.phone) {
+            return 'Monitor'
+        }
+        return 'Student'
+    }
+}
+```
+
+Y podemos hacer cosas como:
+
+```graphql
+mutation createNewMonitor($monitorInput: PersonInput!){
+  createPerson(input: $monitorInput) {
+    _id
+    name
+  }
+}
+```
+
+Usando variables:
+
+```json
+{
+  "monitorInput": {
+    "name": "Monitor 1",
+    "email": "monitor1@gmail",
+    "phone": "1234567890"
+  }
+}
+```
