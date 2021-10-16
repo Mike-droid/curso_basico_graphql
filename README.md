@@ -1165,3 +1165,71 @@ Usando variables:
   }
 }
 ```
+
+### Directivas
+
+Podemos agregar valores booleanos a nuestras queries lo cual hace que esto sea más interesante y complejo:
+
+```graphql
+query getPeopleData($monitor: Boolean!){
+  getPeople{
+    _id
+    name
+    email
+    ... on Monitor @include(if: $monitor) {
+      phone
+    }
+  }
+}
+```
+
+Si usamos la variable:
+
+```json
+{
+  "monitor": true
+}
+```
+
+Obtendremos un resultado como este:
+
+```json
+{
+  "data": {
+    "getPeople": [
+      {
+        "_id": "616a29af02eacddc155c993f",
+        "name": "Monitor 1",
+        "email": "monitor1@gmail",
+        "phone": "1234567890"
+      }
+    ]
+  }
+}
+```
+
+Sin embargo, con la variable en false:
+
+```json
+{
+  "monitor": false
+}
+```
+
+```json
+{
+  "data": {
+    "getPeople": [
+      {
+        "_id": "616a29af02eacddc155c993f",
+        "name": "Monitor 1",
+        "email": "monitor1@gmail"
+      }
+    ]
+  }
+}
+```
+
+Nuestro resultado no contiene el campo phone porque el valor es false.
+
+También podemos agregar una directiva al schema, por ejemlplo `@deprecated`. Esta sirve para indicar que este campo ya *NO* estará en uso, incluso el mismo GraphQL te lo dice cuando ustas un campo con esta directiva.
