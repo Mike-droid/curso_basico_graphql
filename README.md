@@ -1382,3 +1382,9 @@ En el package.json:
 ### HTTP requests
 
 Desde VS Code podemos hacer estas peticiones con la extensión ThunderClient.
+
+### Clientes de GraphQL
+
+El cliente más usado es [Apollo](https://www.apollographql.com/). [Apollo en NPM](https://www.npmjs.com/package/apollo-client).
+
+### Consumiendo el API desde un frontend simple
